@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import requests
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 @dataclass
@@ -44,6 +45,9 @@ class SwitchBotAPIRepository:
         }
         return headers
 
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
     def get_devices(self) -> list[SwitchBotDevice]:
         headers = self.__prepare_headers()
         response = requests.get(self.HOST_DOMAIN + "/v1.1/devices", headers=headers)
@@ -58,6 +62,9 @@ class SwitchBotAPIRepository:
         ]
         return devices
 
+    @retry(
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10)
+    )
     def get_status(self, device_id: str) -> dict[str, Any]:
         headers = self.__prepare_headers()
         response = requests.get(
